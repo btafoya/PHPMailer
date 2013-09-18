@@ -391,6 +391,12 @@ class PHPMailer
     public $DKIM_private = '';
 
     /**
+  * DKIM Privatekey String
+  */
+  public $privKeyStr = NULL;
+
+
+  /**
      * Callback Action function name.
      *
      * The function that handles the result of the send email action.
@@ -983,7 +989,7 @@ class PHPMailer
                 && !empty($this->DKIM_private)
                 && !empty($this->DKIM_selector)
                 && !empty($this->DKIM_domain)
-                && file_exists($this->DKIM_private)) {
+                && (file_exists($this->DKIM_private) || $this->privKeyStr)) {
                 $header_dkim = $this->DKIM_Add(
                     $this->MIMEHeader . $this->mailHeader,
                     $this->encodeHeader($this->secureHeader($this->Subject)),
@@ -3111,8 +3117,12 @@ class PHPMailer
                 throw new phpmailerException($this->lang("signing") . ' OpenSSL extension missing.');
             }
             return '';
-        }
-        $privKeyStr = file_get_contents($this->DKIM_private);
+	    }
+		if($this->privKeyStr) {
+			$privKeyStr = $this->privKeyStr;
+		} else {
+	        $privKeyStr = file_get_contents($this->DKIM_private);
+		}
         if ($this->DKIM_passphrase != '') {
             $privKey = openssl_pkey_get_private($privKeyStr, $this->DKIM_passphrase);
         } else {
